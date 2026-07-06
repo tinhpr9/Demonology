@@ -1052,14 +1052,6 @@ function CantTakePhotoInfo()
 	})
 end
 
-function WitherNotFoundInfo()
-	game:GetService("StarterGui"):SetCore("SendNotification", {
-		Title = "Wither not found",
-		Text = "Không tìm thấy Wither petals hoặc điều kiện kiểm tra sai.",
-		Duration = 3
-	})
-end
-
 function AlreadyTakenGhostPhotoInfo()
 	game:GetService("StarterGui"):SetCore("SendNotification", {
 		Title = "-Info-",
@@ -1113,17 +1105,11 @@ end
 
 local function TpOutside()
 	local success, err = pcall(function()
-		local map = workspace:FindFirstChild("Map")
-		local rooms = map and map:FindFirstChild("Rooms")
-		local baseCamp = rooms and rooms:FindFirstChild("Base Camp")
-		local floorPart = baseCamp and baseCamp:FindFirstChild("Floor")
-		local pegboard = baseCamp and baseCamp:FindFirstChild("Pegboard")
+		local pegboard = workspace:WaitForChild("Map"):WaitForChild("Rooms"):WaitForChild("Base Camp"):WaitForChild("Pegboard")
+		local union = pegboard:FindFirstChild("Union")
 		local char = plr.Character or plr.CharacterAdded:Wait()
-
-		if floorPart and char and char:FindFirstChild("HumanoidRootPart") then
-			char.HumanoidRootPart.CFrame = floorPart.CFrame * CFrame.new(0, 3, 0)
-		elseif pegboard and char and char:FindFirstChild("HumanoidRootPart") then
-			char.HumanoidRootPart.CFrame = pegboard.CFrame * CFrame.new(0, -5, 0)
+		if union and char and char:FindFirstChild("HumanoidRootPart") then
+			char.HumanoidRootPart.CFrame = union.CFrame + Vector3.new(0, 3, 0)
 		end
 	end)
 	if not success then warn("Hunt TP failed:", err) end
@@ -1410,122 +1396,13 @@ DiscordTextBox.Changed:Connect(FixLinkTextBoxes)
 
 function UpdateEvidenceEsp()
 	for _, v in pairs(EvidenceEspList) do
-		if v and v.Destroy then
+		task.spawn(function()
 			v:Destroy()
-		end
+		end)
 	end
-	EvidenceEspList = {}
 
 	if EvidenceEspToggle then
-		if workspace:FindFirstChild("Handprints") then
-			for _, obj in ipairs(workspace.Handprints:GetDescendants()) do
-				if obj:IsA("BasePart") then
-					local BillboardGui = Instance.new("BillboardGui")
-					local HL = Instance.new("Highlight")
-
-					table.insert(EvidenceEspList, BillboardGui)
-					table.insert(EvidenceEspList, HL)
-
-					BillboardGui.Name = "FourHubHandprintsBil"
-					BillboardGui.Parent = game:GetService("CoreGui")
-					BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-					BillboardGui.Active = true
-					BillboardGui.AlwaysOnTop = true
-					BillboardGui.Size = UDim2.new(1, 0, 1, 0)
-					BillboardGui.LightInfluence = 0
-					BillboardGui.Brightness = 1
-					BillboardGui.Adornee = obj
-					BillboardGui.StudsOffset = Vector3.new(0, 1, 0)
-
-					HL.Name = "FourHubHandprintsEsp"
-					HL.Parent = game:GetService("CoreGui")
-					HL.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-					HL.OutlineColor = Color3.fromRGB(255, 170, 0)
-					HL.FillTransparency = 1
-					HL.OutlineTransparency = 0
-					HL.Adornee = obj
-				end
-			end
-		end
-
-		for _, obj in ipairs(workspace:GetDescendants()) do
-			if obj:IsA("BasePart") and obj.Name == "GhostOrb" then
-				local BillboardGui = Instance.new("BillboardGui")
-				local TextLabel = Instance.new("TextLabel")
-				local HL = Instance.new("Highlight")
-
-				BillboardGui.Name = "FourHubOrbBil"
-				BillboardGui.Parent = game:GetService("CoreGui")
-				BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-				BillboardGui.Active = true
-				BillboardGui.AlwaysOnTop = true
-				BillboardGui.Size = UDim2.new(3, 0, 3, 0)
-				BillboardGui.LightInfluence = 0
-				BillboardGui.Brightness = 1
-				BillboardGui.Adornee = obj
-				BillboardGui.StudsOffset = Vector3.new(0, 1, 0)
-
-				TextLabel.Parent = BillboardGui
-				TextLabel.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-				TextLabel.BackgroundTransparency = 1.000
-				TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-				TextLabel.BorderSizePixel = 0
-				TextLabel.Size = UDim2.new(1, 0, 1, 0)
-				TextLabel.Font = Enum.Font.SourceSans
-				TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-				TextLabel.TextScaled = true
-				TextLabel.TextSize = 14.000
-				TextLabel.TextWrapped = true
-				TextLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
-				TextLabel.TextStrokeTransparency = 0
-				TextLabel.Text = "Orb"
-
-				HL.Name = "FourHubOrbEsp"
-				HL.Parent = game:GetService("CoreGui")
-				HL.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-				HL.OutlineColor = Color3.fromRGB(255, 255, 255)
-				HL.FillTransparency = 1
-				HL.OutlineTransparency = 0
-				HL.Adornee = obj
-
-				table.insert(EvidenceEspList, BillboardGui)
-				table.insert(EvidenceEspList, HL)
-			end
-		end
-
-		for _, obj in ipairs(workspace:GetDescendants()) do
-			if obj:IsA("Decal") then
-				local parentModel = obj:FindFirstAncestorWhichIsA("Model")
-				if parentModel and parentModel:GetAttribute("ItemName") == "Spirit Book" then
-					local BillboardGui = Instance.new("BillboardGui")
-					local HL = Instance.new("Highlight")
-
-					BillboardGui.Name = "FourHubWritingBil"
-					BillboardGui.Parent = game:GetService("CoreGui")
-					BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-					BillboardGui.Active = true
-					BillboardGui.AlwaysOnTop = true
-					BillboardGui.Size = UDim2.new(2, 0, 2, 0)
-					BillboardGui.LightInfluence = 0
-					BillboardGui.Brightness = 1
-					BillboardGui.Adornee = parentModel
-					BillboardGui.StudsOffset = Vector3.new(0, 3, 0)
-
-					HL.Name = "FourHubWritingEsp"
-					HL.Parent = game:GetService("CoreGui")
-					HL.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-					HL.OutlineColor = Color3.fromRGB(0, 255, 255)
-					HL.FillTransparency = 1
-					HL.OutlineTransparency = 0
-					HL.Adornee = parentModel
-
-					table.insert(EvidenceEspList, BillboardGui)
-					table.insert(EvidenceEspList, HL)
-				end
-			end
-		end
-	end
-end
+		for _, obj in ipairs(workspace.Handprints:GetDescendants()) do
 			if obj:IsA("BasePart") then
 				local BillboardGui = Instance.new("BillboardGui")
 
@@ -1618,24 +1495,10 @@ end
 	end
 end
 task.spawn(function()
-	local handprintsFolder = workspace:WaitForChild("Handprints")
-	FuncEvi = handprintsFolder.ChildAdded:Connect(function()
+	local Folder = workspace:WaitForChild("Handprints")
+	FuncEvi = Folder.ChildAdded:Connect(function()
 		UpdateEvidenceEsp()
 	end)
-end)
-
-workspace.DescendantAdded:Connect(function(descendant)
-	if EvidenceEspToggle then
-		if descendant:IsA("BasePart") and descendant.Name == "GhostOrb" then
-			UpdateEvidenceEsp()
-		end
-		if descendant:IsA("Decal") then
-			local parentModel = descendant:FindFirstAncestorWhichIsA("Model")
-			if parentModel and parentModel:GetAttribute("ItemName") == "Spirit Book" then
-				UpdateEvidenceEsp()
-			end
-		end
-	end
 end)
 
 ---------------------------------------
@@ -1743,7 +1606,6 @@ end
 local LowestTemp = 100
 local LowestTempRoom = nil
 local HighestEMFLevel = 1
-local HasWarnedWitherNotFound = false
 
 local OldTick = tick()
 Func = RS.Heartbeat:Connect(function()
@@ -1838,18 +1700,6 @@ Func = RS.Heartbeat:Connect(function()
 		if WitherCheck then
 			Wither.Text = "Wither: Yes"
 			Wither.TextColor3 = Color3.fromRGB(0, 255, 0)
-		else
-			Wither.Text = "Wither: No"
-			Wither.TextColor3 = Color3.fromRGB(255, 0, 0)
-		end
-
-		if not WitherCheck and workspace.Items and workspace.Items:FindFirstChild("Petals") == nil then
-			if not HasWarnedWitherNotFound then
-				HasWarnedWitherNotFound = true
-				WitherNotFoundInfo()
-			end
-		else
-			HasWarnedWitherNotFound = false
 		end
 
 		if SpiritBoxCheck then
