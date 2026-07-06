@@ -2033,7 +2033,8 @@ local function TakePhoto()
 			}
 		}
 			TakePhotoWithCameraEvent:FireServer(unpack(args))
-end)
+		    end
+		end
 
 local Numbers = {0, 0.1, 0.2, 0.5, 1, 1.5, 2, 5, 10}
 local index = 5
