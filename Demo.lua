@@ -1119,6 +1119,86 @@ function EquipPhotoCamera()
 	
 	return
 end
+
+local AutoPlaceCooldown = 0
+local HasConcludedEvidence = false
+
+local function CountEvidence()
+	local count = 0
+	if CheckHandprints() then count = count + 1 end
+	if CheckGhostOrb() then count = count + 1 end
+	if CheckWither() then count = count + 1 end
+	if CheckSpiritBox() then count = count + 1 end
+	if CheckGhostWriting() then count = count + 1 end
+	return count
+end
+
+local function AutoConcludeEvidence()
+	local evidenceCount = CountEvidence()
+	if evidenceCount >= 3 then
+		if not HasConcludedEvidence then
+			HasConcludedEvidence = true
+			game:GetService("StarterGui"):SetCore("SendNotification", {
+				Title = "Evidence complete",
+				Text = "Found " .. tostring(evidenceCount) .. " evidences. Auto concluded.",
+				Duration = 4
+			})
+			Ghost.Text = "Conclusion: " .. tostring(evidenceCount) .. "/5 evidences"
+		end
+	else
+		HasConcludedEvidence = false
+	end
+	return evidenceCount
+end
+
+local function EnsureItemInInventory(ItemName)
+	local Found, InvSlotNum = CheckInventory(ItemName)
+	if Found then
+		return true, InvSlotNum
+	end
+	local ModelFound, Model = FindItem(ItemName)
+	if ModelFound and Model then
+		PickupItem(Model)
+		task.wait(0.4)
+		return CheckInventory(ItemName)
+	end
+	return false, nil
+end
+
+local function AutoPlaceItemNearGhost()
+	if tick() - AutoPlaceCooldown < 5 then
+		return
+	end
+	AutoPlaceCooldown = tick()
+
+	local ghostModel = workspace:FindFirstChild("Ghost")
+	if not ghostModel or ghostModel:GetAttribute("Hunting") == true then
+		return
+	end
+
+	local Chara = plr.Character
+	if not Chara or not Chara:FindFirstChild("HumanoidRootPart") then
+		return
+	end
+
+	TpToGhost()
+	task.wait(0.35)
+
+	local itemPriority = {"Cross", "Laser Projector", "Spirit Book", "Flower Pot", "EMF Reader"}
+	for _, itemName in ipairs(itemPriority) do
+		local found, slot = EnsureItemInInventory(itemName)
+		if found and slot then
+			EquipItem(slot)
+			task.wait(0.35)
+			ActiveItem()
+			task.wait(0.35)
+			DropItem(slot)
+			task.wait(0.35)
+			return
+		end
+	end
+end
+
 --some functions
 
 local function TpOutside()
@@ -1269,26 +1349,31 @@ local function UseSpiritBox()
 	local Chara = plr.Character
 	if Chara and AutoSpiritBoxToggle and ghostModel:GetAttribute("Hunting") ~= true then
 		Chara:PivotTo(ghostModel:GetPivot() * CFrame.new(0, 0, 10))
+		AutoPlaceItemNearGhost()
 	else
 		if Chara and AutoSpiritBoxToggle then
 			TpOutside()
 		end
 	end
 
+	if AutoSpiritBoxToggle then
+		AutoConcludeEvidence()
+	end
+
 	if tick() - DelaySBTick > 0.5 and AutoSpiritBoxToggle and ghostModel:GetAttribute("Hunting") ~= true then
 		DelaySBTick = tick()
 
 		local Found, InvSlotNum = CheckInventory("Spirit Box")
-		if not CheckInventory("Spirit Box") then
-			local Found, Model = FindItem("Spirit Box")
-			if Found and Model then
+		if not Found then
+			local Found2, Model = FindItem("Spirit Box")
+			if Found2 and Model then
 				PickupItem(Model)
 				task.wait(0.35)
 				ActiveItem()
 				task.wait(0.5)
-				local Found, InvSlotNum = CheckInventory("Spirit Box")
-				if Found then
-					EquipItem(InvSlotNum)
+				local Found3, InvSlotNum2 = CheckInventory("Spirit Box")
+				if Found3 then
+					EquipItem(InvSlotNum2)
 					task.wait(0.5)
 					FireSpiritBox()
 				end
@@ -1663,6 +1748,11 @@ Func = RS.Heartbeat:Connect(function()
 		local WitherCheck = CheckWither()
 		local SpiritBoxCheck = CheckSpiritBox()
 		local GhostWritingCheck = CheckGhostWriting()
+		local evidenceCount = CountEvidence()
+
+		if AutoSpiritBoxToggle then
+			AutoConcludeEvidence()
+		end
 
 		local GhostHunting = ghostModel:GetAttribute("Hunting")
 		local GhostFavRoom = ghostModel:GetAttribute("FavoriteRoom")
@@ -1780,6 +1870,7 @@ end)
 AutoSpiritBox.MouseButton1Click:Connect(function()
 	if AutoSpiritBoxToggle == false then
 		AutoSpiritBoxToggle = true
+		HasConcludedEvidence = false
 		AutoSpiritBox.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 	else
 		AutoSpiritBoxToggle = false
