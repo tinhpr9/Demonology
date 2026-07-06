@@ -2,11 +2,19 @@ if not game:IsLoaded() then
 	game.Loaded:Wait()
 end
 
+local RS = game:GetService("RunService")
+local PS = game:GetService("Players")
+local Lighting = game:GetService("Lighting")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+local CoreGui = game:GetService("CoreGui")
+local Workspace = game:GetService("Workspace")
+
 if getgenv()["DemonologyUI"] == nil then
 	getgenv()["DemonologyUI"] = true
 else
 	print("Previous gui detected!")
-	game:GetService("StarterGui"):SetCore("SendNotification", {
+	StarterGui:SetCore("SendNotification", {
 		Title = "Previous gui detected!",
 		Text = "Please close the previous gui to create the new one",
 		Duration = 5
@@ -77,15 +85,15 @@ local LinkImage = Instance.new("ImageLabel")
 --Properties:
 
 DemonologyPRO.Name = "DemonologyPRO"
-if game:GetService("RunService"):IsStudio() then
-	DemonologyPRO.Parent = game:GetService("Players").LocalPlayer.PlayerGui
+if RS:IsStudio() then
+	DemonologyPRO.Parent = PS.LocalPlayer.PlayerGui
 else
 	local Success = pcall(function()
-		DemonologyPRO.Parent = (gethui and gethui()) or (syn and syn.protect_gui and syn.protect_gui(DemonologyPRO)) or game:GetService("CoreGui")
+		DemonologyPRO.Parent = (gethui and gethui()) or (syn and syn.protect_gui and syn.protect_gui(DemonologyPRO)) or CoreGui
 	end)
 
 	if not Success then
-		DemonologyPRO.Parent = game:GetService("CoreGui")
+		DemonologyPRO.Parent = CoreGui
 	end
 end
 DemonologyPRO.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -814,7 +822,7 @@ LinkImage.Size = UDim2.new(0.553106368, 0, 1, 0)
 LinkImage.Image = "rbxassetid://115736032752379"
 LinkImage.ImageColor3 = Color3.fromRGB(0, 0, 0)
 
-if not game:GetService("RunService"):IsStudio() then
+if not RS:IsStudio() then
 	DemonologyPRO.Name = "ScreenGui"
 end
 
@@ -842,11 +850,26 @@ HL.Enabled = false
 --------------------------------------------------------------
 ------------------------SCRIPT--------------------------------
 --------------------------------------------------------------
-local RS = game:GetService("RunService")
-local PS = game:GetService("Players")
-local Lighting = game:GetService("Lighting")
+-- Cached services are declared near the top of the script.
+-- local RS = game:GetService("RunService")
+-- local PS = game:GetService("Players")
+-- local Lighting = game:GetService("Lighting")
+-- local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- local StarterGui = game:GetService("StarterGui")
+-- local CoreGui = game:GetService("CoreGui")
+-- local Workspace = game:GetService("Workspace")
 
 local plr = PS.LocalPlayer
+local Events = ReplicatedStorage:WaitForChild("Events")
+local ToggleItemStateEvent = Events:WaitForChild("ToggleItemState")
+local RequestItemEquipEvent = Events:WaitForChild("RequestItemEquip")
+local RequestItemPickupEvent = Events:WaitForChild("RequestItemPickup")
+local RequestItemDropEvent = Events:WaitForChild("RequestItemDrop")
+local UseLightSwitchEvent = Events:WaitForChild("UseLightSwitch")
+local AskSpiritBoxFromUIEvent = Events:WaitForChild("AskSpiritBoxFromUI")
+local ToggleFuseBoxEvent = Events:WaitForChild("ToggleFuseBox")
+local TakePhotoWithCameraEvent = Events:WaitForChild("TakePhotoWithCamera")
+local ClientChangeDoorStateEvent = Events:WaitForChild("ClientChangeDoorState")
 
 local CheckSpeedNum = 1
 
@@ -994,7 +1017,7 @@ function FindItem(ItemName)
 	local Found = false
 	local Model = nil
 
-	local ItemFolder = workspace.Items
+	local ItemFolder = Workspace.Items
 
 	for _, v in pairs(ItemFolder:GetChildren()) do
 		if v:IsA("Model") and v:GetAttribute("ItemName") then
@@ -1019,7 +1042,7 @@ function ActiveItem()
 				if v:GetAttribute("Enabled") ~= true then
 					local Handle = v:FindFirstChild("Handle")
 					if Handle then
-						game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("ToggleItemState"):FireServer(ItemModel)
+						ToggleItemStateEvent:FireServer(ItemModel)
 						break
 					end
 				end
@@ -1032,17 +1055,17 @@ function ActiveItem()
 end
 
 function EquipItem(SlotNum)
-	game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("RequestItemEquip"):FireServer("InvSlot" .. tostring(SlotNum))
+	RequestItemEquipEvent:FireServer("InvSlot" .. tostring(SlotNum))
 	return true
 end
 
 function PickupItem(Model)
-	game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("RequestItemPickup"):FireServer(Model)
+	RequestItemPickupEvent:FireServer(Model)
 	return true
 end
 
 function DropItem(SlotNum)
-	game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("RequestItemDrop"):FireServer("InvSlot" .. tostring(SlotNum))
+	RequestItemDropEvent:FireServer("InvSlot" .. tostring(SlotNum))
 	return true
 end
 
@@ -1055,7 +1078,7 @@ function CopyToClipboard(Texts)
 end
 
 function GhostHuntingInfo()
-	game:GetService("StarterGui"):SetCore("SendNotification", {
+	StarterGui:SetCore("SendNotification", {
 		Title = "Ghost hunting!",
 		Text = "This action cannot be performed.",
 		Duration = 3
@@ -1063,7 +1086,7 @@ function GhostHuntingInfo()
 end
 
 function CantTakePhotoInfo()
-	game:GetService("StarterGui"):SetCore("SendNotification", {
+	StarterGui:SetCore("SendNotification", {
 		Title = "Cannot take a photo!",
 		Text = "There's' nothing to take a photo, try again after a ghost hunt!",
 		Duration = 3
@@ -1071,7 +1094,7 @@ function CantTakePhotoInfo()
 end
 
 function AlreadyTakenGhostPhotoInfo()
-	game:GetService("StarterGui"):SetCore("SendNotification", {
+	StarterGui:SetCore("SendNotification", {
 		Title = "-Info-",
 		Text = "A photo of the ghost has already been taken!",
 		Duration = 3
@@ -1079,7 +1102,7 @@ function AlreadyTakenGhostPhotoInfo()
 end
 
 function CopiedInfo()
-	game:GetService("StarterGui"):SetCore("SendNotification", {
+	StarterGui:SetCore("SendNotification", {
 		Title = "-Info-",
 		Text = "Link copied!",
 		Icon = "rbxassetid://115736032752379",
@@ -1088,7 +1111,7 @@ function CopiedInfo()
 end
 
 function PhotoCamNotFoundInfo()
-	game:GetService("StarterGui"):SetCore("SendNotification", {
+	StarterGui:SetCore("SendNotification", {
 		Title = "-Info-",
 		Text = "There is not photo camera here!",
 		Duration = 3
@@ -1097,12 +1120,12 @@ end
 
 function EquipPhotoCamera()
 	local Found, InvSlotNum = CheckInventory("Photo Camera")
-	if not CheckInventory("Photo Camera") then
-		local Found, Model = FindItem("Photo Camera")
-		if Found and Model then
-			PickupItem(Model)
-			task.wait(0.5)
-			local Found, InvSlotNum = CheckInventory("Photo Camera")
+if not Found then
+			local FoundModel, Model = FindItem("Photo Camera")
+			if FoundModel and Model then
+				PickupItem(Model)
+				task.wait(0.5)
+				Found, InvSlotNum = CheckInventory("Photo Camera")
 			if Found then
 				EquipItem(InvSlotNum)
 				task.wait(0.5)
@@ -1138,7 +1161,7 @@ local function AutoConcludeEvidence()
 	if evidenceCount >= 3 then
 		if not HasConcludedEvidence then
 			HasConcludedEvidence = true
-			game:GetService("StarterGui"):SetCore("SendNotification", {
+			StarterGui:SetCore("SendNotification", {
 				Title = "Evidence complete",
 				Text = "Found " .. tostring(evidenceCount) .. " evidences. Auto concluded.",
 				Duration = 4
@@ -1171,7 +1194,7 @@ local function AutoPlaceItemNearGhost()
 	end
 	AutoPlaceCooldown = tick()
 
-	local ghostModel = workspace:FindFirstChild("Ghost")
+	local ghostModel = Workspace:FindFirstChild("Ghost")
 	if not ghostModel or ghostModel:GetAttribute("Hunting") == true then
 		return
 	end
@@ -1203,7 +1226,7 @@ end
 
 local function TpOutside()
 	local success, err = pcall(function()
-		local map = workspace:FindFirstChild("Map")
+		local map = Workspace:FindFirstChild("Map")
 		local rooms = map and map:FindFirstChild("Rooms")
 		local baseCamp = rooms and rooms:FindFirstChild("Base Camp")
 		local pegboard = baseCamp and baseCamp:FindFirstChild("Pegboard")
@@ -1222,19 +1245,19 @@ local function TpOutside()
 end
 
 --Auto escape hunt
-Func2 = workspace.DescendantAdded:Connect(function(descendant)
+Func2 = Workspace.DescendantAdded:Connect(function(descendant)
 	if IsEscapeHunt and descendant:IsA("Sound") and descendant.Name == "Hunt" then
 		TpOutside()
 	end
 end)
 
 -- Room Tracking & Temps
-local ghostModel = workspace:WaitForChild("Ghost", 15)
+local ghostModel = Workspace:WaitForChild("Ghost", 15)
 if not ghostModel then
 	warn("Find ghost model failed")
 	return end
 local ghostPart = ghostModel:FindFirstChildWhichIsA("BasePart")
-local roomsFolder = workspace:FindFirstChild("Map") and workspace.Map:FindFirstChild("Rooms")
+local roomsFolder = Workspace:FindFirstChild("Map") and Workspace.Map:FindFirstChild("Rooms")
 if not ghostPart or not roomsFolder then 
 	warn("Find rooms failed")
 	return end
@@ -1248,7 +1271,7 @@ local function CreateGhostEsp()
 		TextLabel = Instance.new("TextLabel")
 		HL = Instance.new("Highlight")
 
-		BillboardGui.Parent = game:GetService("CoreGui")
+		BillboardGui.Parent = CoreGui
 		BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 		BillboardGui.Active = true
 		BillboardGui.AlwaysOnTop = true
@@ -1308,10 +1331,10 @@ local function getRoomName(pos)
 end
 
 local function ToggleLightNow(Toggle)
-	local Rooms = workspace:WaitForChild("Map"):WaitForChild("Rooms")
+	local Rooms = Workspace:WaitForChild("Map"):WaitForChild("Rooms")
 	for _, Room in pairs(Rooms:GetChildren()) do
 		if Room:GetAttribute("LightsOn") ~= Toggle then
-			game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("UseLightSwitch"):FireServer(Room)
+			UseLightSwitchEvent:FireServer(Room)
 		end
 	end
 end
@@ -1340,12 +1363,12 @@ local function FireSpiritBox()
 		"How long ago did you die?",
 		"Is there a ghost here?"
 	}
-	game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("AskSpiritBoxFromUI"):FireServer(args[math.random(1, #args)])
+	AskSpiritBoxFromUIEvent:FireServer(args[math.random(1, #args)])
 end
 
 local DelaySBTick = tick()
 local function UseSpiritBox()
-	local ghostModel = workspace:WaitForChild("Ghost")
+	local ghostModel = Workspace:WaitForChild("Ghost")
 	local Chara = plr.Character
 	if Chara and AutoSpiritBoxToggle and ghostModel:GetAttribute("Hunting") ~= true then
 		Chara:PivotTo(ghostModel:GetPivot() * CFrame.new(0, 0, 10))
@@ -1412,7 +1435,7 @@ end
 
 function UpdatePlrEsp()
 	if PlayersEspToggle then
-		for _, plr in pairs(game:GetService("Players"):GetPlayers()) do
+		for _, plr in pairs(PS:GetPlayers()) do
 			if plr.Character then
 				local HumanoidRootPart = plr.Character:FindFirstChild("HumanoidRootPart")
 				if HumanoidRootPart then
@@ -1478,7 +1501,7 @@ function UpdatePlrEsp()
 			end
 		end
 	else
-		for _, plr in pairs(game:GetService("Players"):GetPlayers()) do
+		for _, plr in pairs(PS:GetPlayers()) do
 			if plr.Character then
 				local HumanoidRootPart = plr.Character:FindFirstChild("HumanoidRootPart")
 				if HumanoidRootPart then
@@ -1520,7 +1543,7 @@ function UpdateEvidenceEsp()
 	ClearEvidenceEsp()
 
 	if EvidenceEspToggle then
-		local handprintsFolder = workspace:FindFirstChild("Handprints")
+		local handprintsFolder = Workspace:FindFirstChild("Handprints")
 		if handprintsFolder then
 			for _, obj in ipairs(handprintsFolder:GetDescendants()) do
 				if obj:IsA("BasePart") then
@@ -1531,7 +1554,7 @@ function UpdateEvidenceEsp()
 					table.insert(EvidenceEspList, HL)
 
 					BillboardGui.Name = "FourHubHandprintsBil"
-					BillboardGui.Parent = game:GetService("CoreGui")
+					BillboardGui.Parent = CoreGui
 					BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 					BillboardGui.Active = true
 					BillboardGui.AlwaysOnTop = true
@@ -1563,7 +1586,7 @@ function UpdateEvidenceEsp()
 		end
 
 		local GhostOrbPart = nil
-		for _, obj in ipairs(workspace:GetDescendants()) do
+		for _, obj in ipairs(Workspace:GetDescendants()) do
 			if obj:IsA("BasePart") and obj.Name == "GhostOrb" then
 				GhostOrbPart = obj
 				GhostOrbPart.Transparency = 0
@@ -1580,7 +1603,7 @@ function UpdateEvidenceEsp()
 			table.insert(EvidenceEspList, HL)
 
 			BillboardGui.Name = "FourHubOrbBil"
-			BillboardGui.Parent = game:GetService("CoreGui")
+			BillboardGui.Parent = CoreGui
 			BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 			BillboardGui.Active = true
 			BillboardGui.AlwaysOnTop = true
@@ -1606,7 +1629,7 @@ function UpdateEvidenceEsp()
 			TextLabel.Text = "Orb"
 
 			HL.Name = "FourHubOrbEsp"
-			HL.Parent = game:GetService("CoreGui")
+			HL.Parent = CoreGui
 			HL.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 			HL.OutlineColor = Color3.fromRGB(255, 255, 255)
 			HL.FillTransparency = 1
@@ -1616,7 +1639,7 @@ function UpdateEvidenceEsp()
 	end
 end
 task.spawn(function()
-	local Folder = workspace:WaitForChild("Handprints")
+	local Folder = Workspace:WaitForChild("Handprints")
 	FuncEvi = Folder.ChildAdded:Connect(function()
 		UpdateEvidenceEsp()
 	end)
@@ -1643,7 +1666,7 @@ end
 
 local function CheckHandprints()
 	local found = false
-	for _, obj in ipairs(workspace:GetDescendants()) do
+	for _, obj in ipairs(Workspace:GetDescendants()) do
 		if obj:IsA("BasePart") and (
 			obj.Name == "Handprint1" or
 				obj.Name == "Handprint2" or
@@ -1659,7 +1682,7 @@ end
 
 local function CheckGhostOrb()
 	local found = false
-	for _, obj in ipairs(workspace:GetDescendants()) do
+	for _, obj in ipairs(Workspace:GetDescendants()) do
 		if obj:IsA("BasePart") and obj.Name == "GhostOrb" then
 			found = true
 			break
@@ -1671,7 +1694,7 @@ end
 
 local function CheckEMF()
 	local Level = 0
-	for _, obj in ipairs(workspace:GetDescendants()) do
+	for _, obj in ipairs(Workspace:GetDescendants()) do
 		if obj:IsA("Folder") and obj.Name == "Indicators" then
 			for _, v in pairs(obj:GetChildren()) do
 				if v:IsA("BasePart") and v.Material == Enum.Material.Neon and tonumber(v.Name) > Level then
@@ -1685,7 +1708,7 @@ end
 
 local function CheckWither()
 	local Found = false
-	for _, obj in ipairs(workspace.Items:GetDescendants()) do
+	for _, obj in ipairs(Workspace.Items:GetDescendants()) do
 		if obj:IsA("BasePart") and obj.Name == "Petals" then
 			if obj.Color == Color3.new(0,0,0) then
 				Found = true
@@ -1699,7 +1722,7 @@ end
 local function CheckGhostWriting()
 	local Found = false
 
-	for _, obj in ipairs(workspace.Items:GetDescendants()) do
+	for _, obj in ipairs(Workspace.Items:GetDescendants()) do
 		if obj:IsA("Decal") then
 			local Model = obj:FindFirstAncestorWhichIsA("Model")
 			if Model and Model:GetAttribute("ItemName") == "Spirit Book" then
@@ -1734,8 +1757,8 @@ Func = RS.Heartbeat:Connect(function()
 	if tick() - OldTick > CheckSpeedNum then --delay 0.2s
 		OldTick = tick()
 		
-		ModeText.Text = "Difficulty: " .. tostring(workspace:GetAttribute("Difficulty"))
-		Take3StarsPhoto.Text = "Take 3 stars photo (" .. tostring(workspace:GetAttribute("PhotosTaken")) .. "/6)"
+ModeText.Text = "Difficulty: " .. tostring(Workspace:GetAttribute("Difficulty"))
+	Take3StarsPhoto.Text = "Take 3 stars photo (" .. tostring(Workspace:GetAttribute("PhotosTaken")) .. "/6)"
 		
 		FixLinkTextBoxes()
 		UpdatePlrEnegry()
@@ -1864,7 +1887,7 @@ EscapeHunt.MouseButton1Click:Connect(function()
 end)
 
 TurnOnFuse.MouseButton1Click:Connect(function()
-	game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("ToggleFuseBox"):FireServer()
+	ToggleFuseBoxEvent:FireServer()
 end)
 
 AutoSpiritBox.MouseButton1Click:Connect(function()
@@ -2005,20 +2028,11 @@ local function TakePhoto()
 			{
 				Stars = 3,
 				Type = "Ghost",
-				Object = workspace:WaitForChild("Ghost"),
+				Object = Workspace:WaitForChild("Ghost"),
 				Reward = 24
 			}
 		}
-		game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("TakePhotoWithCamera"):FireServer(unpack(args))
-	
-	else
-		AlreadyTakenGhostPhotoInfo()
-	end
-end
-TakeAPhoto.MouseButton1Click:Connect(function()
-	if EquipPhotoCamera() then
-		TakePhoto()
-	end
+			TakePhotoWithCameraEvent:FireServer(unpack(args))
 end)
 
 local Numbers = {0, 0.1, 0.2, 0.5, 1, 1.5, 2, 5, 10}
@@ -2066,7 +2080,7 @@ ItemEsp.MouseButton1Click:Connect(function()
 		ItemEspToggle = true
 		ItemEsp.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
 		
-		for _, v in pairs(workspace:GetDescendants()) do
+		for _, v in pairs(Workspace:GetDescendants()) do
 			if v:IsA("Model") and v:GetAttribute("ItemName") ~= nil then
 				local BillboardGui = Instance.new("BillboardGui")
 				local TextLabel = Instance.new("TextLabel")
@@ -2213,13 +2227,13 @@ Take3StarsPhoto.MouseButton1Click:Connect(function()
 		local Item = nil
 		local ItemType = nil
 		--Find burnt cross first
-		for _, v in pairs(workspace.Items:GetChildren()) do
+		for _, v in pairs(Workspace.Items:GetChildren()) do
 			if v:GetAttribute("DisplayName") == "Burnt Cross" then
 				if not AlreadyTakenCheck(v) then
 					v:SetAttribute("FourHubAlreadyTakenPhoto", true)
 					Item = v
 					ItemType = "BurntCross"
-					game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = v:GetPivot() * CFrame.new(0, 1, 0)
+					plr.Character.HumanoidRootPart.CFrame = v:GetPivot() * CFrame.new(0, 1, 0)
 					break
 				end
 			end
@@ -2227,13 +2241,13 @@ Take3StarsPhoto.MouseButton1Click:Connect(function()
 
 		--if no more burnt cross to take a photo then do this
 		if ItemType == nil and Item == nil then
-			for _, v in pairs(workspace.Interactables:GetChildren()) do
+			for _, v in pairs(Workspace.Interactables:GetChildren()) do
 				if v:GetAttribute("PhotoRewardAvailable") == true then
 					if not AlreadyTakenCheck(v) then
 						v:SetAttribute("FourHubAlreadyTakenPhoto", true)
 						Item = v
 						ItemType = "Interaction"
-						game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.CFrame = v:GetPivot() * CFrame.new(0, 1, 0)
+						plr.Character.HumanoidRootPart.CFrame = v:GetPivot() * CFrame.new(0, 1, 0)
 						break
 					end
 				end
@@ -2242,7 +2256,7 @@ Take3StarsPhoto.MouseButton1Click:Connect(function()
 
 		if ItemType == "BurntCross" and Item ~= nil then
 			local args = {
-				workspace.CurrentCamera.CFrame,
+				Workspace.CurrentCamera.CFrame,
 				{
 					Stars = 3,
 					Type = "BurntCross",
@@ -2250,13 +2264,12 @@ Take3StarsPhoto.MouseButton1Click:Connect(function()
 					Reward = 12
 				}
 			}
-			game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("TakePhotoWithCamera"):FireServer(unpack(args))
-
+			TakePhotoWithCameraEvent:FireServer(unpack(args))
 		end
 
 		if ItemType == "Interaction" and Item ~= nil then
 			local args = {
-				workspace.CurrentCamera.CFrame,
+				Workspace.CurrentCamera.CFrame,
 				{
 					Stars = 3,
 					Type = "Interaction",
@@ -2264,20 +2277,17 @@ Take3StarsPhoto.MouseButton1Click:Connect(function()
 					Reward = 8
 				}
 			}
-			game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("TakePhotoWithCamera"):FireServer(unpack(args))
-
+			TakePhotoWithCameraEvent:FireServer(unpack(args))
 		end
 
 		if Item == nil and ItemType == nil then
 			CantTakePhotoInfo()
 		end
-		
+
 		task.wait(1)
-		
 		TpOutside()
-		
 		task.wait(1)
-		
+
 		db3 = false
 	end
 end)
@@ -2299,11 +2309,11 @@ task.spawn(function()
 	task.wait(30)
 	local ExitDoorModel = nil
 
-	for _, v in pairs(workspace:GetDescendants()) do
+	for _, v in pairs(Workspace:GetDescendants()) do
 		if v:IsA("Model") and v.Name == "ExitDoor" then
 			ExitDoorModel = v
 			if v:GetAttribute("DoorClosed") ~= false then
-				game:GetService("ReplicatedStorage"):WaitForChild("Events"):WaitForChild("ClientChangeDoorState"):FireServer(ExitDoorModel:WaitForChild("Door"))
+				ClientChangeDoorStateEvent:FireServer(ExitDoorModel:WaitForChild("Door"))
 			else
 				break
 			end
