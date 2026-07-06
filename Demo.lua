@@ -1,3 +1,19 @@
+if not game:IsLoaded() then
+	game.Loaded:Wait()
+end
+
+if getgenv()["DemonologyUI"] == nil then
+	getgenv()["DemonologyUI"] = true
+else
+	print("Previous gui detected!")
+	game:GetService("StarterGui"):SetCore("SendNotification", {
+		Title = "Previous gui detected!",
+		Text = "Please close the previous gui to create the new one",
+		Duration = 5
+	})
+	return
+end
+
 -- Instances:
 
 local DemonologyPRO = Instance.new("ScreenGui")
