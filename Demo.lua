@@ -883,13 +883,23 @@ Close.MouseButton1Click:Connect(function()
 	
 	for _, v in pairs(ItemEspList) do
 		task.spawn(function()
-			v:Destroy()
+			if v and type(v.Destroy) == "function" then
+				pcall(function()
+					v:Destroy()
+				end)
+			end
 		end)
 	end
 	
-	if BillboardGui ~= nil and HL ~= nil then
-		BillboardGui:Destroy()
-		HL:Destroy()
+	if BillboardGui ~= nil then
+		pcall(function()
+			BillboardGui:Destroy()
+		end)
+	end
+	if HL ~= nil then
+		pcall(function()
+			HL:Destroy()
+		end)
 	end
 	
 	Lighting.Ambient = OldLightingList.Ambient
@@ -899,14 +909,22 @@ Close.MouseButton1Click:Connect(function()
 	Lighting.FogEnd = OldLightingList.FogEnd
 
 	DemonologyPRO:Destroy()
-	Func:Disconnect()
-	Func2:Disconnect()
-	FuncEvi:Disconnect()
+	if Func then
+		Func:Disconnect()
+	end
+	if Func2 then
+		Func2:Disconnect()
+	end
+	if FuncEvi then
+		FuncEvi:Disconnect()
+	end
 
 	getgenv()["DemonologyUI"] = nil
 	
 	task.spawn(function()
-		plr.Character.Humanoid.WalkSpeed = 10
+		if plr.Character and plr.Character:FindFirstChild("Humanoid") then
+			plr.Character.Humanoid.WalkSpeed = 10
+		end
 	end)
 	
 	task.spawn(function()
@@ -1105,11 +1123,19 @@ end
 
 local function TpOutside()
 	local success, err = pcall(function()
-		local pegboard = workspace:WaitForChild("Map"):WaitForChild("Rooms"):WaitForChild("Base Camp"):WaitForChild("Pegboard")
-		local union = pegboard:FindFirstChild("Union")
+		local map = workspace:FindFirstChild("Map")
+		local rooms = map and map:FindFirstChild("Rooms")
+		local baseCamp = rooms and rooms:FindFirstChild("Base Camp")
+		local pegboard = baseCamp and baseCamp:FindFirstChild("Pegboard")
+		local floorPart = baseCamp and baseCamp:FindFirstChild("Floor")
+		local union = pegboard and pegboard:FindFirstChild("Union")
 		local char = plr.Character or plr.CharacterAdded:Wait()
-		if union and char and char:FindFirstChild("HumanoidRootPart") then
-			char.HumanoidRootPart.CFrame = union.CFrame + Vector3.new(0, 3, 0)
+		if char and char:FindFirstChild("HumanoidRootPart") then
+			if union then
+				char.HumanoidRootPart.CFrame = union.CFrame + Vector3.new(0, 3, 0)
+			elseif floorPart then
+				char.HumanoidRootPart.CFrame = floorPart.CFrame * CFrame.new(0, 3, 0)
+			end
 		end
 	end)
 	if not success then warn("Hunt TP failed:", err) end
@@ -1394,49 +1420,59 @@ end
 YoutubeTextBox.Changed:Connect(FixLinkTextBoxes)
 DiscordTextBox.Changed:Connect(FixLinkTextBoxes)
 
-function UpdateEvidenceEsp()
+local function ClearEvidenceEsp()
 	for _, v in pairs(EvidenceEspList) do
-		task.spawn(function()
-			v:Destroy()
-		end)
+		if v and type(v.Destroy) == "function" then
+			pcall(function()
+				v:Destroy()
+			end)
+		end
 	end
+	EvidenceEspList = {}
+end
+
+function UpdateEvidenceEsp()
+	ClearEvidenceEsp()
 
 	if EvidenceEspToggle then
-		for _, obj in ipairs(workspace.Handprints:GetDescendants()) do
-			if obj:IsA("BasePart") then
-				local BillboardGui = Instance.new("BillboardGui")
+		local handprintsFolder = workspace:FindFirstChild("Handprints")
+		if handprintsFolder then
+			for _, obj in ipairs(handprintsFolder:GetDescendants()) do
+				if obj:IsA("BasePart") then
+					local BillboardGui = Instance.new("BillboardGui")
+					local HL = Instance.new("Highlight")
 
-				table.insert(EvidenceEspList, BillboardGui)
-				table.insert(EvidenceEspList, HL)
+					table.insert(EvidenceEspList, BillboardGui)
+					table.insert(EvidenceEspList, HL)
 
-				BillboardGui.Name = "FourHubHandprintsBil"
-				BillboardGui.Parent = game:GetService("CoreGui")
-				BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-				BillboardGui.Active = true
-				BillboardGui.AlwaysOnTop = true
-				BillboardGui.Size = UDim2.new(1, 0, 1, 0)
-				BillboardGui.LightInfluence = 0
-				BillboardGui.Brightness = 1
-				BillboardGui.Adornee = obj
-				BillboardGui.StudsOffset = Vector3.new(0, 1, 0)
+					BillboardGui.Name = "FourHubHandprintsBil"
+					BillboardGui.Parent = game:GetService("CoreGui")
+					BillboardGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+					BillboardGui.Active = true
+					BillboardGui.AlwaysOnTop = true
+					BillboardGui.Size = UDim2.new(1, 0, 1, 0)
+					BillboardGui.LightInfluence = 0
+					BillboardGui.Brightness = 1
+					BillboardGui.Adornee = obj
+					BillboardGui.StudsOffset = Vector3.new(0, 1, 0)
 
-				local ImageLabelFromSG = nil
-
-				for _, v in pairs(obj:GetDescendants()) do
-					if v:IsA("ImageLabel") then
-						ImageLabelFromSG = v:Clone()
+					local ImageLabelFromSG = nil
+					for _, child in pairs(obj:GetDescendants()) do
+						if child:IsA("ImageLabel") then
+							ImageLabelFromSG = child:Clone()
+						end
 					end
-				end
 
-				if ImageLabelFromSG ~= nil then
-					local ImageLabel = ImageLabelFromSG
-					ImageLabel.Parent = BillboardGui
-					ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-					ImageLabel.BackgroundTransparency = 1.000
-					ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-					ImageLabel.BorderSizePixel = 0
-					ImageLabel.ImageTransparency = 0
-					ImageLabel.Size = UDim2.new(1, 0, 1, 0)
+					if ImageLabelFromSG ~= nil then
+						local ImageLabel = ImageLabelFromSG
+						ImageLabel.Parent = BillboardGui
+						ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+						ImageLabel.BackgroundTransparency = 1.000
+						ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+						ImageLabel.BorderSizePixel = 0
+						ImageLabel.ImageTransparency = 0
+						ImageLabel.Size = UDim2.new(1, 0, 1, 0)
+					end
 				end
 			end
 		end
